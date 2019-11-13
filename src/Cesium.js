@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Viewer, Entity, Globe, Polyline, PolylineCollection } from 'resium'
-import { Cartesian3 } from 'cesium'
+import { Viewer, Entity, Globe, PolylineGraphics } from 'resium'
+import { Cartesian3, Color } from 'cesium'
 import axios from 'axios'
+import TLEJS from 'tle.js';
+
+const tlejs = new TLEJS();
 
 const pointGraphics = { pixelSize: 10 };
+
+const dummyCredit = document.createElement("div")
 
 function useInterval(callback, delay) {
   const savedCallback = useRef();
@@ -25,13 +30,25 @@ const Cesium = () => {
   const [latISS, setLatISS] = useState(0)
   const [longISS, setLongISS] = useState(0)
   const [altiISS, setAltiISS] = useState(0)
-  const [orbitAPI, setOrbitAPI] = useState([])
-  const [orbitISS, setOrbitISS] = useState([])
   const positionISS = Cartesian3.fromDegrees(longISS, latISS, altiISS)
-  let totalTest = []
-
-  let testing = Cartesian3.fromDegreesArray([30,10, 55,10, 55,-6])
   
+
+  const [orbit, setOrbit] = useState({
+    "@id": "https://data.ivanstanojevic.me/api/tle/25544",
+    "@type": "TleModel",
+    "satelliteId": 25544,
+    "name": "ISS (ZARYA)",
+    "date": "2019-11-12T14:57:06+00:00",
+    "line1": "1 25544U 98067A   19316.62299738  .00004810  00000-0  92183-4 0  9996",
+    "line2": "2 25544  51.6451 345.3171 0006141 272.0902 233.9416 15.50005371198285"
+})
+
+  useEffect(async () => {
+    await axios.get('https://data.ivanstanojevic.me/api/tle/25544')
+    .then(res => setOrbit(res.data))
+  }, [])
+
+
   useInterval(() => {
     axios.get('https://api.wheretheiss.at/v1/satellites/25544')
       .then(res => {
@@ -40,73 +57,20 @@ const Cesium = () => {
       .catch(err => console.log(err))
   }, 1000);
 
-  useInterval(() => {
-      axios.get('https://www.n2yo.com/rest/v1/satellite/positions/25544/0/0/0/20/&apiKey=4HWX82-7AYZSW-Y84HPN-484B')
-        .then(res => {
-          setOrbitAPI(res.data.positions)
-        })
-            // .catch(err => console.log(err))
-    },5000)
-  
-    useEffect(() => {
+    let tleArr = [orbit.line1, orbit.line2];
+    let track = tlejs.getGroundTrackLngLat(tleArr);
+    let positions = track[1].map(arr => Cartesian3.fromDegrees(arr[0], arr[1]));
 
-
-      setOrbitISS(orbitAPI.map(x => x.satlongitude, x.satlatitude))
-
-
-      // orbitAPI.map(x => {
-
-      //   orbitISS.push(x.satlongitude, x.satlatitude))
-      //   totalTest.push(x.satlatitude, x.satlongitude);
-      //   // allLong.push(x.satlongitude)
-      // })
-
-      // let testing = Cartesian3.fromDegreesArray({orbitISS})
-      // return testing;
-
-
-      //   for (let i=0; i <3600; i++){
-      //     for (let j=0; j< 1; j++){
-      //       totalTest.push(allLong[i], allLat[i])
-      //     }
-      //   }
-      //   console.log(totalTest)
-
-      // setOrbitISS([])
-
-      // orbitAPI.map(x => {
-      //   setOrbitISS([...orbitISS, x.satlongitude, x.satlatitude])
-      // })
-
-      // setOrbitISS(orbitAPI.map(x => { 
-        
-      // return  [ x.satlongitude, x.satlatitude]}))
-      console.log(totalTest)
-
-      
-    }, [orbitAPI])
-
-
-
-    // console.log(orbitISS)
-  
-    // useEffect(() => {
-    //   setOrbitISS([...orbitISS, orbitAPI.map(e => {  `new Cartesian3(${e.longitude}, ${e.latitude}, ${e.altitude})`
-    //   })])
-    // }, [orbitAPI]) 
-
-  return (
-    <Viewer className='test'>
+    return (
+    <>
+      <Viewer className='test' vrButton={false} timeline={false} animation={false} creditContainer={'Boop'}>
       <Globe enableLighting /> 
-      <Entity
-        name="ISS (Zarya)"
-        position={positionISS}
-        point={pointGraphics}
-        description={`${latISS} ${longISS} `} />
-      <PolylineCollection>
-        <Polyline positions={testing} width={2} />
-      </PolylineCollection> 
-    </Viewer>
+        <Entity position={positionISS} point={pointGraphics} name="ISS (Zarya)">
+          <PolylineGraphics positions={positions} material={Color.RED}/>
+        </Entity>
+      </Viewer>
+      <div id='Boop'></div>
+    </>
   )
 }
 

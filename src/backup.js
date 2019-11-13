@@ -26,12 +26,14 @@ const Cesium = () => {
   const [longISS, setLongISS] = useState(0)
   const [altiISS, setAltiISS] = useState(0)
   const [orbitAPI, setOrbitAPI] = useState([])
-  const [orbitISS, setOrbitISS] = useState(0,0)
+  const [orbitISS, setOrbitISS] = useState([])
   const positionISS = Cartesian3.fromDegrees(longISS, latISS, altiISS)
-
-  const testing = Cartesian3.fromDegreesArray([30,10, 55,10, 55,-6])
   
-
+  const [trigger, setTrigger] = useState(false)
+  let totalTest = [0,0]
+  let testing = Cartesian3.fromDegreesArray(totalTest)
+  let init = Cartesian3.fromDegreesArray([0,0])
+  
   useInterval(() => {
     axios.get('https://api.wheretheiss.at/v1/satellites/25544')
       .then(res => {
@@ -41,32 +43,25 @@ const Cesium = () => {
   }, 1000);
 
   useInterval(() => {
-      axios.get('https://www.n2yo.com/rest/v1/satellite/positions/25544/0/0/0/3600/&apiKey=4HWX82-7AYZSW-Y84HPN-484B')
+      axios.get('https://www.n2yo.com/rest/v1/satellite/positions/25544/0/0/0/2600/&apiKey=4HWX82-7AYZSW-Y84HPN-484B')
         .then(res => {
           setOrbitAPI(res.data.positions)
-          console.log(res.data.positions)
         })
             // .catch(err => console.log(err))
     },5000)
   
-    // useEffect(() => {
-    //   setOrbitISS([])
+    useEffect(() => {
+      totalTest = []
 
-    //   // orbitAPI.map(x => {
-    //   //   setOrbitISS([...orbitISS, x.satlongitude, x.satlatitude, x.altitude])
-    //   // })
-    //   setOrbitISS(orbitAPI.map(x => { 
-        
-    //    return  [...orbitISS, x.satlongitude, x.satlatitude]}))
-    //    console.log(orbitISS)
-    // }, [orbitAPI])
+      orbitAPI.map(x => {
 
-    // console.log(orbitISS)
-  
-    // useEffect(() => {
-    //   setOrbitISS([...orbitISS, orbitAPI.map(e => {  `new Cartesian3(${e.longitude}, ${e.latitude}, ${e.altitude})`
-    //   })])
-    // }, [orbitAPI]) 
+        return totalTest.push(x.satlatitude, x.satlongitude)})
+
+        setTrigger(true)
+
+        console.log(testing)
+
+    }, [orbitAPI]) 
 
   return (
     <Viewer className='test'>
@@ -77,7 +72,7 @@ const Cesium = () => {
         point={pointGraphics}
         description={`${latISS} ${longISS} `} />
       <PolylineCollection>
-        <Polyline positions={testing} width={2} />
+        <Polyline positions={trigger ? testing : init} width={2} />
       </PolylineCollection> 
     </Viewer>
   )

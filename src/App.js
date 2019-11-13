@@ -4,7 +4,9 @@ import Cesium from './Cesium'
 
 function App() {
   return (
-    <Cesium />
+    <>
+    <Cesium/>
+    </>
   );
 }
 
