@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Viewer, Entity, Globe, PolylineGraphics } from 'resium'
+import { Viewer, Entity, Globe, PolylineGraphics, BillboardGraphics } from 'resium'
 import { Cartesian3, Color } from 'cesium'
 import axios from 'axios'
 import TLEJS from 'tle.js';
+import Zarya from './image/ICONMarker.png'
 
 const tlejs = new TLEJS();
 
@@ -65,7 +66,8 @@ const Cesium = () => {
     <>
       <Viewer className='test' vrButton={false} timeline={false} animation={false} creditContainer={'Boop'}>
       <Globe enableLighting /> 
-        <Entity position={positionISS} point={pointGraphics} name="ISS (Zarya)">
+        <Entity position={positionISS} name="ISS (Zarya)">
+        <BillboardGraphics image={Zarya} scale={1}/>
           <PolylineGraphics positions={positions} material={Color.RED}/>
         </Entity>
       </Viewer>
